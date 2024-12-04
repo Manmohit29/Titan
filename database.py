@@ -31,6 +31,33 @@ class CL_DBHelper:
                                             date_ DATE,
                                             payload TEXT)
                                         """)
+        self.c.execute('''CREATE TABLE IF NOT EXISTS misc(id INTEGER NOT NULL DEFAULT "1",
+                                                 previous_status INTEGER DEFAULT 0)''')
+
+    def get_previous_status(self):
+        try:
+            self.c.execute("""SELECT previous_status FROM misc""")
+            part_name = self.c.fetchone()
+            if part_name is not None:
+                return part_name[0]
+            else:
+                return None
+        except Exception as e:
+            log.error(f"Error while getting previous part from misc table: {e}")
+
+    def update_previous_status(self, status):
+        try:
+            self.c.execute("""SELECT * FROM MISC""")
+            fetched_data = self.c.fetchone()
+            if fetched_data is not None:
+                self.c.execute("""UPDATE misc SET previous_status = ? """, (status,))
+                log.info(f"Successfully updated previous status  : {status}")
+            else:
+                self.c.execute("""INSERT INTO misc(previous_status) VALUES (?) """, (status,))
+                log.info(f"Successfully inserted previous status  : {status}")
+            self.conn.commit()
+        except Exception as e:
+            log.error(f"Error while adding or updating the previous status into misc table : {e}")
 
     def add_cycle_data(self, today, recipe_name):
         try:
@@ -60,14 +87,16 @@ class CL_DBHelper:
         except Exception as e:
             log.error(f"Error in adding cycle start data : {e}")
 
-    def get_cycle_data(self, today):
+    def get_cycle_data(self):
         try:
             self.c.execute("SELECT * FROM cycle_data "
-                           "WHERE date_ = ? "
-                           "ORDER BY id DESC LIMIT 1", (today,))
+                           "ORDER BY id DESC LIMIT 1")
             fetched_data = self.c.fetchone()
-            print(fetched_data)
-            return fetched_data
+            log.info(fetched_data)
+            if fetched_data:
+                return fetched_data
+            else:
+                return None
         except Exception as e:
             log.error(f"Error while getting cycle data")
         # return fetched_data
@@ -76,8 +105,7 @@ class CL_DBHelper:
         try:
             stop_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             self.c.execute("SELECT * FROM cycle_data "
-                           "WHERE date_ = ? "
-                           "ORDER BY id DESC LIMIT 1", (today,))
+                           "ORDER BY id DESC LIMIT 1")
             fetched_data = self.c.fetchone()
             if fetched_data is not None:
                 id_ = fetched_data[0]
@@ -131,9 +159,8 @@ class CL_DBHelper:
         except Exception as e:
             log.error(f'Error: No sync Data to clear {e}')
 
-
 # date_ = datetime.today().strftime("%F")
-# print(date_)
+# # print(date_)
 # db = CL_DBHelper()
 # db.add_cycle_data(date_, "ABC")
 # time.sleep(12)
@@ -144,3 +171,4 @@ class CL_DBHelper:
 # time.sleep(5)
 # print('after updating cycle time')
 # d = db.get_cycle_data(date_)
+# print(d)

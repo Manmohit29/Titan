@@ -1,0 +1,12 @@
+# folders to ignore
+.venv
+build
+dist
+logs
+
+# files to ignore
+main.spec
+registers
+test_2.py
+test_3.py
+titan.db
